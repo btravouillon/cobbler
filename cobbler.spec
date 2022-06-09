@@ -152,7 +152,7 @@
 
 Name:           cobbler
 Version:        3.3.2
-Release:        2%{?dist}
+Release:        3%{?dist}
 Summary:        Boot server configurator
 URL:            https://cobbler.github.io/
 
