@@ -516,8 +516,34 @@ if __name__ == "__main__":
             "schema"
         ],
         extras_require={
-            "lint": ["pyflakes", "pycodestyle"],
-            "test": ["pytest", "pytest-cov", "codecov", "pytest-mock"]
+            "windows": [
+                # "hivex",
+                "pefile"
+            ],
+            "extra": ["psutil"],  # debugging startup performance
+            "lint": [
+                # pyright is not written in Python and has to be installed differently.
+                "pyflakes",
+                "pycodestyle",
+                "pylint",
+                "black==22.3.0",  # See .pre-commit-config.yaml
+                "types-requests",
+                "types-PyYAML",
+                "types-psutil",
+                "types-netaddr",
+                "isort",
+            ],
+            "test": [
+                "pytest>6",
+                "pytest-cov",
+                "coverage",
+                "pytest-mock>3.3.0",
+                "pytest-benchmark",
+            ],
+            "docs": ["sphinx", "sphinx-rtd-theme", "sphinxcontrib-apidoc"],
+            # We require the current version to properly detect duplicate issues
+            # See: https://github.com/twisted/towncrier/releases/tag/22.8.0
+            "changelog": ["towncrier>=22.8.0"],
         },
         packages=find_packages(exclude=["*tests*"]),
         scripts=[
