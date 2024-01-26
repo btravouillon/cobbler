@@ -2,15 +2,11 @@ name: Building Cobbler packages
 
 on:
   push:
-    branches:
-      - master
-      - release30
-      - release32
+    branches: [ main, release* ]
+    tags:
+      - 'v*'
   pull_request:
-    branches:
-      - master
-      - release30
-      - release32
+    branches: [ main, release* ]
 
 jobs:
   build-centos8-rpms:
@@ -21,6 +17,12 @@ jobs:
         shell: 'script -q -e -c "bash {0}"'
         run: |
           ./docker/rpms/build-and-install-rpms.sh rl8 docker/rpms/Rocky_Linux_8/Rocky_Linux_8.dockerfile
+      - name: Archive RPMs
+        uses: actions/upload-artifact@v3
+        with:
+          name: rpms-centos8
+          path: |
+            rpm-build/*.rpm
   build-fedora34-rpms:
     runs-on: ubuntu-20.04
     steps:
@@ -29,22 +31,12 @@ jobs:
         shell: 'script -q -e -c "bash {0}"'
         run: |
           ./docker/rpms/build-and-install-rpms.sh fc34 docker/rpms/Fedora_34/Fedora34.dockerfile
-  build-opensuse-leap-rpms:
-    runs-on: ubuntu-20.04
-    steps:
-      - uses: actions/checkout@v2
-      - name: Build a openSUSE Leap 15.3 Package
-        shell: 'script -q -e -c "bash {0}"'
-        run: |
-          ./docker/rpms/build-and-install-rpms.sh opensuse-leap docker/rpms/opensuse_leap/openSUSE_Leap153.dockerfile
-  build-opensuse-tumbleweed-rpms:
-    runs-on: ubuntu-20.04
-    steps:
-      - uses: actions/checkout@v2
-      - name: Build a openSUSE Tumbleweed Package
-        shell: 'script -q -e -c "bash {0}"'
-        run: |
-          ./docker/rpms/build-and-install-rpms.sh opensuse-tumbleweed docker/rpms/opensuse_tumbleweed/openSUSE_TW.dockerfile
+      - name: Archive RPMs
+        uses: actions/upload-artifact@v3
+        with:
+          name: rpms-fedora-34
+          path: |
+            rpm-build/*.rpm
   build-debian10-debs:
     runs-on: ubuntu-20.04
     steps:
@@ -53,6 +45,12 @@ jobs:
         shell: 'script -q -e -c "bash {0}"'
         run: |
           ./docker/debs/build-and-install-debs.sh deb10 docker/debs/Debian_10/Debian10.dockerfile
+      - name: Archive DEBs
+        uses: actions/upload-artifact@v3
+        with:
+          name: debs-debian10
+          path: |
+            deb-build/DEBS/all/*.deb
   build-debian11-debs:
     runs-on: ubuntu-20.04
     steps:
@@ -61,3 +59,33 @@ jobs:
         shell: 'script -q -e -c "bash {0}"'
         run: |
           ./docker/debs/build-and-install-debs.sh deb11 docker/debs/Debian_11/Debian11.dockerfile
+      - name: Archive DEBs
+        uses: actions/upload-artifact@v3
+        with:
+          name: debs-debian11
+          path: |
+            deb-build/DEBS/all/*.deb
+  create-release:
+    name: Build the release and create a GitHub release
+    runs-on: ubuntu-20.04
+    needs: [
+      build-centos8-rpms,
+      build-fedora34-rpms,
+      build-debian10-debs,
+      build-debian11-debs,
+    ]
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/download-artifact@v3
+        name: Download all built artifacts
+        with:
+          path: artifacts
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: |
+            artifacts/rpms-centos8/*.rpm
+            artifacts/debs-debian10/*.deb
+            artifacts/debs-debian11/*.deb
+            artifacts/rpms-fedora-34/*.rpm
