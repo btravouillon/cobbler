@@ -103,7 +103,7 @@
 %define system_release_pkg base-files
 
 # Debian 11 moved to the C implementation of createrepo
-%if 0%{?debian} == 11
+%if 0%{?debian} >= 11
 %define createrepo_pkg createrepo-c
 %endif
 
